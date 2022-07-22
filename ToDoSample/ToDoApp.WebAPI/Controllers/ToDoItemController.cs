@@ -1,5 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Collections.Generic;
+using ToDoApp.CoreObjects.AppInterfaces;
+using Microsoft.Extensions.DependencyInjection;
+using System.Threading.Tasks;
+using ToDoApp.CoreObjects.Entities;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -9,38 +14,82 @@ namespace ToDoApp.WebAPI.Controllers
     [ApiController]
     public class ToDoItemController : ControllerBase
     {
-        public ToDoItemController() { }
+        private IServiceProvider _ServiceProvider { get; }
+        private IToDoItemsApplication _ToDoItemsApplication { get; }
 
-        // GET: api/<ValuesController>
+        public ToDoItemController(IServiceProvider serviceProvider)
+        {
+            _ServiceProvider = serviceProvider;
+            _ToDoItemsApplication = serviceProvider.GetService<IToDoItemsApplication>();
+        }
+
         [HttpGet]
-        public IEnumerable<string> Get()
+        public async Task<ActionResult<IEnumerable<ToDoItem>>> GetAsync()
         {
-            return new string[] { "value1", "value2" };
+            var currentUser = GetCurrentUser();
+            var toDoItems = await _ToDoItemsApplication.GetItemsAsync(currentUser.Id);
+            foreach (var item in toDoItems)
+            {
+                //ConvertToView
+            }
+            return new OkObjectResult(toDoItems);
         }
 
-        // GET api/<ValuesController>/5
         [HttpGet("{id}")]
-        public string Get(int id)
+        public async Task<ActionResult<ToDoItem>> GetAsync(Guid id)
         {
-            return "value";
+            var currentUser = GetCurrentUser();
+            var toDoItem = await _ToDoItemsApplication.GetItemByIdAsync(id);
+            if (toDoItem == null) return new NotFoundResult();
+            if (currentUser.Id != toDoItem.UserId) return new UnauthorizedResult();
+            return new OkObjectResult(toDoItem);
         }
 
-        // POST api/<ValuesController>
         [HttpPost]
-        public void Post([FromBody] string value)
+        public async Task<IAsyncResult> PostAsync([FromBody] string value)
         {
+            var currentUser = GetCurrentUser();
+            ValidateToDoItem(value);
+            ValidateAuthor(currentUser, value);
+            ToDoItem item = new ToDoItem();
+            await _ToDoItemsApplication.AddItemAsync(item);
+            
+            return (IAsyncResult)CreatedAtAction(nameof(GetAsync), new { id = item.Id }, item);
         }
 
-        // PUT api/<ValuesController>/5
+
+
         [HttpPut("{id}")]
         public void Put(int id, [FromBody] string value)
         {
+            var currentUser = GetCurrentUser();
+            ValidateToDoItem(value);
+            ValidateAuthor(currentUser, value);
+            ToDoItem item = new ToDoItem();
+            //await _ToDoItemsApplication.AddItemAsync(item);
+
+            //return (IAsyncResult)CreatedAtAction(nameof(GetAsync), new { id = item.Id }, item);
         }
 
         // DELETE api/<ValuesController>/5
         [HttpDelete("{id}")]
         public void Delete(int id)
         {
+        }
+
+        private User GetCurrentUser()
+        {
+            throw new NotImplementedException();
+        }
+
+        private void ValidateToDoItem(string value)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void ValidateAuthor(User currentUser, string value)
+        {
+            throw new NotImplementedException();
         }
     }
 }
