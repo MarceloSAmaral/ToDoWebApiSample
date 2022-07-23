@@ -12,7 +12,7 @@ namespace ToDoApp.Data
         {
         }
 
-        public DbSet<ToDoItem> Posts { get; set; }
+        public DbSet<ToDoItem> ToDoItems { get; set; }
         public DbSet<User> Users { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
