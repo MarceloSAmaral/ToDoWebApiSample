@@ -10,6 +10,8 @@ namespace ToDoApp.CoreObjects.Entities
         public String ItemContent { get; set; }
         public DateTimeOffset CreatedAt { get; set; }
         public DateTimeOffset UpdatedAt { get; set; }
+        public bool Completed { get; set; }
         public DateTimeOffset? CompletedAt { get; set; }
+
     }
 }

@@ -7,11 +7,11 @@ namespace ToDoApp.CoreObjects.AppInterfaces
 {
     public interface IToDoItemsApplication
     {
-        Task AddItemAsync(ToDoItem item);
-        Task UpdateItemAsync(ToDoItem item);
-        Task CompleteItemAsync(Guid itemId);
-        Task DeleteItemAsync(Guid itemId);
-        Task<ToDoItem> GetItemByIdAsync(Guid itemId);
-        Task<IEnumerable<ToDoItem>> GetItemsAsync(Guid userId);
+        Task CompleteToDoItemAsync(User currentUser, Guid toDoItemId);
+        Task CreateToDoItemAsync(User currentUser, ToDoItem toDoItem);
+        Task DeleteToDoItemAsync(User currentUser, Guid toDoItemId);
+        Task UpdateToDoItemAsync(User currentUser, ToDoItem toDoItem);
+        Task<ToDoItem> GetItemByIdAsync(Guid toDoItemId);
+        IEnumerable<ToDoItem> GetItems(User currentUser);
     }
 }

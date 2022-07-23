@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace ToDoApp.CoreObjects.RepoInterfaces
@@ -12,5 +14,6 @@ namespace ToDoApp.CoreObjects.RepoInterfaces
         void Update(TEntity entityToUpdate);
         void UpdateRange(IEnumerable<TEntity> entitiesToUpdate);
         void Delete(TKey key);
+        IQueryable<TEntity> Get(Predicate<TEntity> predicate);
     }
 }
