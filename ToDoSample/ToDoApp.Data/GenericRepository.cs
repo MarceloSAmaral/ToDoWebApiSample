@@ -1,6 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Linq;
+using System.Linq.Expressions;
+using System;
 
 namespace ToDoApp.Data
 {
@@ -61,5 +64,11 @@ namespace ToDoApp.Data
             dbSet.AttachRange(entitiesToUpdate);
             Context.Entry(entitiesToUpdate).State = EntityState.Modified;
         }
+       
+        public virtual IQueryable<TEntity> Get(Predicate<TEntity> predicate)
+        {
+            return dbSet.Where(x => predicate(x));
+        }
+
     }
 }
