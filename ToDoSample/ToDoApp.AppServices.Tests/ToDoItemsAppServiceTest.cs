@@ -67,5 +67,20 @@ namespace ToDoApp.AppServices.Tests
             ToDoItemsApplication itemsApplication = new ToDoItemsApplication(_serviceProviderFake.Object, _unitOfWorkFactoryFake.Object);
             await Assert.ThrowsAsync<CannotUpdateCompletedToDoItemException>(() => itemsApplication.UpdateToDoItemAsync(currentUser, userInputItem));
         }
+
+
+        /*
+         * Other tests that would be applicable to this project:
+
+                Creating a ToDoItem with an existing ToDoItemId results in OK
+                Creating a ToDoItem with status Completed results in exception
+                Updating a ToDoItem alters its UpdatedAt timestamp
+                Completing a ToDoItem alters its CompletedAt timestamp
+                Completing an already completed ToDoItem results in OK
+                Completing an already completed ToDoItem does not change its CompletedAt timestamp
+                An user cannot create a ToDoItem for / in behalf of another user
+                An user cannot read, modify or delete a ToDoItem belonging to another user
+
+         */
     }
 }
