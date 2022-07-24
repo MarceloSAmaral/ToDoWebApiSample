@@ -5,13 +5,14 @@ using ToDoApp.CoreObjects.AppInterfaces;
 using Microsoft.Extensions.DependencyInjection;
 using System.Threading.Tasks;
 using ToDoApp.CoreObjects.Entities;
-
-// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+using ToDoApp.Base;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 
 namespace ToDoApp.WebAPI.Controllers
 {
-    [Route("api/[controller]")]
     [ApiController]
+    [Route("api/[controller]")]
     public class ToDoItemController : ControllerBase
     {
         private IServiceProvider _ServiceProvider { get; }
@@ -23,73 +24,119 @@ namespace ToDoApp.WebAPI.Controllers
             _ToDoItemsApplication = serviceProvider.GetService<IToDoItemsApplication>();
         }
 
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<ToDoItem>>> GetAsync()
+        [HttpGet("/List")]
+        public async Task<IActionResult> List()
         {
-            var currentUser = GetCurrentUser();
-            var toDoItems = await _ToDoItemsApplication.GetItemsAsync(currentUser.Id);
-            foreach (var item in toDoItems)
+            try
             {
-                //ConvertToView
+                var currentUser = await GetCurrentUserAsync();
+                var toDoItems = _ToDoItemsApplication.GetItems(currentUser);
+                return new OkObjectResult(toDoItems);
             }
-            return new OkObjectResult(toDoItems);
+            catch (Exception ex)
+            {
+                return Error(ex);
+            }
         }
 
-        [HttpGet("{id}")]
-        public async Task<ActionResult<ToDoItem>> GetAsync(Guid id)
+        [HttpGet("/Get/{id}")]
+        public async Task<IActionResult> Get(Guid id)
         {
-            var currentUser = GetCurrentUser();
-            var toDoItem = await _ToDoItemsApplication.GetItemByIdAsync(id);
-            if (toDoItem == null) return new NotFoundResult();
-            if (currentUser.Id != toDoItem.UserId) return new UnauthorizedResult();
-            return new OkObjectResult(toDoItem);
+            try
+            {
+                var currentUser = await GetCurrentUserAsync();
+                var toDoItem = await _ToDoItemsApplication.GetItemByIdAsync(currentUser, id);
+                if (toDoItem == null) return new NotFoundResult();
+                return new OkObjectResult(toDoItem);
+            }
+            catch (Exception ex)
+            {
+                return Error(ex);
+            }
         }
 
-        [HttpPost]
-        public async Task<IAsyncResult> PostAsync([FromBody] string value)
+        [HttpPost("/Add")]
+        public async Task<IActionResult> Add([FromBody] ToDoItem value)
         {
-            var currentUser = GetCurrentUser();
-            ValidateToDoItem(value);
-            ValidateAuthor(currentUser, value);
-            ToDoItem item = new ToDoItem();
-            await _ToDoItemsApplication.AddItemAsync(item);
-            
-            return (IAsyncResult)CreatedAtAction(nameof(GetAsync), new { id = item.Id }, item);
+            try
+            {
+                var currentUser = await GetCurrentUserAsync();
+                await _ToDoItemsApplication.CreateToDoItemAsync(currentUser, value);
+                return CreatedAtAction(nameof(Get), new { id = value.Id }, value);
+            }
+            catch (Exception ex)
+            {
+                return Error(ex);
+            }
         }
 
-
-
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
+        [HttpPost("/Update")]
+        public async Task<IActionResult> Update([FromBody] ToDoItem value)
         {
-            var currentUser = GetCurrentUser();
-            ValidateToDoItem(value);
-            ValidateAuthor(currentUser, value);
-            ToDoItem item = new ToDoItem();
-            //await _ToDoItemsApplication.AddItemAsync(item);
-
-            //return (IAsyncResult)CreatedAtAction(nameof(GetAsync), new { id = item.Id }, item);
+            try
+            {
+                var currentUser = await GetCurrentUserAsync();
+                await _ToDoItemsApplication.UpdateToDoItemAsync(currentUser, value);
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return Error(ex);
+            }
         }
 
-        // DELETE api/<ValuesController>/5
-        [HttpDelete("{id}")]
-        public void Delete(int id)
+        [HttpPut("/Complete/{id}")]
+        public async Task<IActionResult> Complete(Guid id)
         {
+            try
+            {
+                var currentUser = await GetCurrentUserAsync();
+                await _ToDoItemsApplication.CompleteToDoItemAsync(currentUser, id);
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return Error(ex);
+            }
         }
 
-        private User GetCurrentUser()
+        [HttpDelete("/Delete/{id}")]
+        public async Task<IActionResult> Delete(Guid id)
         {
-            throw new NotImplementedException();
+            try
+            {
+                var currentUser = await GetCurrentUserAsync();
+                await _ToDoItemsApplication.DeleteToDoItemAsync(currentUser, id);
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return Error(ex);
+            }
         }
 
-        private void ValidateToDoItem(string value)
+        [NonAction]
+        public virtual async Task<User> GetCurrentUserAsync()
         {
-            throw new NotImplementedException();
+            //Lets skip Authentication for a while and assume that this api is being used by the *DefaultUser*
+            var usersAppService = _ServiceProvider.GetService<IUsersApplication>();
+            var currentUser = await usersAppService.GetUserByIdAsync(new Guid("00000000-0000-0000-0001-000000000001"));
+            return currentUser;
         }
 
-        private void ValidateAuthor(User currentUser, string value)
+        [NonAction]
+        public virtual IActionResult Error(Exception exception)
         {
-            throw new NotImplementedException();
+            if(exception is BaseException)
+            {
+                if(exception is NotAuthorizedException)
+                {
+                    return new Microsoft.AspNetCore.Mvc.UnauthorizedResult();
+                }
+
+                return new BadRequestObjectResult(exception.Message);
+            }
+            return new StatusCodeResult(StatusCodes.Status500InternalServerError);
         }
     }
 }

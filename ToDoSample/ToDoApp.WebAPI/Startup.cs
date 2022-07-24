@@ -1,17 +1,14 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using ToDoApp.AppServices;
+using ToDoApp.CoreObjects.AppInterfaces;
+using ToDoApp.CoreObjects.RepoInterfaces;
 using ToDoApp.Data;
 
 namespace ToDoApp.WebAPI
@@ -28,7 +25,10 @@ namespace ToDoApp.WebAPI
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddDbContext<ToDoAppContext>(opt => opt.UseInMemoryDatabase("ToDoAppDB"));
+            services.AddDbContext<ToDoAppContext>(opt => opt.UseInMemoryDatabase("ToDoAppDB"), ServiceLifetime.Transient, ServiceLifetime.Transient);
+            services.AddTransient<IUnitOfWorkFactory, UnitOfWorkFactory>();
+            services.AddScoped<IUsersApplication, UserAppService>();
+            services.AddScoped<IToDoItemsApplication, ToDoItemsApplication>();
             services.AddControllers();
             services.AddSwaggerGen(c =>
             {
@@ -44,7 +44,10 @@ namespace ToDoApp.WebAPI
                 app.UseDeveloperExceptionPage();
                 app.UseSwagger();
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "ToDoApp.WebAPI v1"));
+
+                CreateInitialData(app.ApplicationServices);
             }
+
 
             app.UseHttpsRedirection();
 
@@ -56,6 +59,24 @@ namespace ToDoApp.WebAPI
             {
                 endpoints.MapControllers();
             });
+        }
+
+        private void CreateInitialData(IServiceProvider serviceProvider)
+        {
+            var context = serviceProvider.GetService<ToDoAppContext>();
+
+            var defaultUser = new CoreObjects.Entities.User()
+            {
+                Id = new Guid("00000000-0000-0000-0001-000000000001"), /*Easy to remember*/
+            };
+            context.Users.Add(defaultUser);
+
+            var someoneelseUser = new CoreObjects.Entities.User()
+            {
+                Id = new Guid("00000000-0000-0000-0001-000000000002"),
+            };
+            context.Users.Add(someoneelseUser);
+            context.SaveChanges();
         }
     }
 }
