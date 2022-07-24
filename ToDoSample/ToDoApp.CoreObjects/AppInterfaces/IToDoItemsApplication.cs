@@ -11,7 +11,7 @@ namespace ToDoApp.CoreObjects.AppInterfaces
         Task CreateToDoItemAsync(User currentUser, ToDoItem toDoItem);
         Task DeleteToDoItemAsync(User currentUser, Guid toDoItemId);
         Task UpdateToDoItemAsync(User currentUser, ToDoItem toDoItem);
-        Task<ToDoItem> GetItemByIdAsync(Guid toDoItemId);
+        Task<ToDoItem> GetItemByIdAsync(User currentUser, Guid toDoItemId);
         IEnumerable<ToDoItem> GetItems(User currentUser);
     }
 }

@@ -8,10 +8,10 @@ namespace ToDoApp.CoreObjects.Entities
         public Guid UserId { get; set; }
         public User User { get; set; }
         public String ItemContent { get; set; }
-        public DateTimeOffset CreatedAt { get; set; }
-        public DateTimeOffset UpdatedAt { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public DateTime UpdatedAt { get; set; }
         public bool Completed { get; set; }
-        public DateTimeOffset? CompletedAt { get; set; }
+        public DateTime? CompletedAt { get; set; }
 
     }
 }

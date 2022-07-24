@@ -37,7 +37,7 @@ namespace ToDoApp.AppServices
 
                 if (toDoItem.Completed) throw new ToDoItemCannotBeCreatedAlreadyCompletedException();
 
-                toDoItem.CreatedAt = TimeProvider.Current.OffsetUtcNow;
+                toDoItem.CreatedAt = TimeProvider.Current.UtcNow;
                 toDoItem.UpdatedAt = toDoItem.CreatedAt;
 
                 uow.ToDoItemsRepository.Insert(toDoItem);
@@ -61,7 +61,7 @@ namespace ToDoApp.AppServices
 
                 if (alreadyExistingItem.Completed) throw new CannotUpdateCompletedToDoItemException();
 
-                alreadyExistingItem.UpdatedAt = TimeProvider.Current.OffsetUtcNow;
+                alreadyExistingItem.UpdatedAt = TimeProvider.Current.UtcNow;
                 alreadyExistingItem.ItemContent = toDoItem.ItemContent;
 
                 uow.ToDoItemsRepository.Update(alreadyExistingItem);
@@ -81,7 +81,7 @@ namespace ToDoApp.AppServices
 
                 if (alreadyExistingItem.Completed) return;
 
-                alreadyExistingItem.CompletedAt = TimeProvider.Current.OffsetUtcNow;
+                alreadyExistingItem.CompletedAt = TimeProvider.Current.UtcNow;
                 alreadyExistingItem.Completed = true;
 
                 uow.ToDoItemsRepository.Update(alreadyExistingItem);
@@ -105,11 +105,13 @@ namespace ToDoApp.AppServices
             }
         }
 
-        public async Task<ToDoItem> GetItemByIdAsync(Guid toDoItemId)
+        public async Task<ToDoItem> GetItemByIdAsync(User currentUser, Guid toDoItemId)
         {
             using (var uow = UowFactory.Create())
             {
-                return await uow.ToDoItemsRepository.GetByKeyAsync(toDoItemId);
+                var todoItem = await uow.ToDoItemsRepository.GetByKeyAsync(toDoItemId);
+                if (currentUser.Id != todoItem.UserId) throw new NotAuthorizedException();
+                return todoItem;
             }
         }
 
@@ -117,7 +119,7 @@ namespace ToDoApp.AppServices
         {
             using (var uow = UowFactory.Create())
             {
-                return uow.ToDoItemsRepository.Get(x => x.UserId == currentUser.Id).AsEnumerable();
+                return uow.ToDoItemsRepository.GetByUserId(currentUser.Id);
             }
         }
     }
