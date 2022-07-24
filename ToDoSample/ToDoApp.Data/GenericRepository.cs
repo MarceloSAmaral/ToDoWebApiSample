@@ -64,11 +64,5 @@ namespace ToDoApp.Data
             dbSet.AttachRange(entitiesToUpdate);
             Context.Entry(entitiesToUpdate).State = EntityState.Modified;
         }
-       
-        public virtual IQueryable<TEntity> Get(Predicate<TEntity> predicate)
-        {
-            return dbSet.Where(x => predicate(x));
-        }
-
     }
 }

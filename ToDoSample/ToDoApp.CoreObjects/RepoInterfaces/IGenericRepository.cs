@@ -14,6 +14,5 @@ namespace ToDoApp.CoreObjects.RepoInterfaces
         void Update(TEntity entityToUpdate);
         void UpdateRange(IEnumerable<TEntity> entitiesToUpdate);
         void Delete(TKey key);
-        IQueryable<TEntity> Get(Predicate<TEntity> predicate);
     }
 }
