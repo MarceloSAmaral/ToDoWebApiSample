@@ -8,6 +8,8 @@ using ToDoApp.CoreObjects.Entities;
 using ToDoApp.Base;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using AutoMapper;
+using ToDoApp.WebAPI.ApiModels;
 
 namespace ToDoApp.WebAPI.Controllers
 {
@@ -17,11 +19,14 @@ namespace ToDoApp.WebAPI.Controllers
     {
         private IServiceProvider _ServiceProvider { get; }
         private IToDoItemsApplication _ToDoItemsApplication { get; }
+        private IMapper _mapper { get; }
+
 
         public ToDoItemController(IServiceProvider serviceProvider)
         {
             _ServiceProvider = serviceProvider;
             _ToDoItemsApplication = serviceProvider.GetService<IToDoItemsApplication>();
+            _mapper = serviceProvider.GetService<IMapper>();
         }
 
         [HttpGet("/List")]
@@ -31,7 +36,12 @@ namespace ToDoApp.WebAPI.Controllers
             {
                 var currentUser = await GetCurrentUserAsync();
                 var toDoItems = _ToDoItemsApplication.GetItems(currentUser);
-                return new OkObjectResult(toDoItems);
+                List<ToDoItemView> viewItems = new List<ToDoItemView>();
+                foreach (var item in toDoItems)
+                {
+                    viewItems.Add(_mapper.Map<ToDoItemView>(item));
+                }
+                return new OkObjectResult(viewItems);
             }
             catch (Exception ex)
             {
@@ -47,7 +57,8 @@ namespace ToDoApp.WebAPI.Controllers
                 var currentUser = await GetCurrentUserAsync();
                 var toDoItem = await _ToDoItemsApplication.GetItemByIdAsync(currentUser, id);
                 if (toDoItem == null) return new NotFoundResult();
-                return new OkObjectResult(toDoItem);
+                var viewItem = _mapper.Map<ToDoItemView>(toDoItem);
+                return new OkObjectResult(viewItem);
             }
             catch (Exception ex)
             {
@@ -56,13 +67,17 @@ namespace ToDoApp.WebAPI.Controllers
         }
 
         [HttpPost("/Add")]
-        public async Task<IActionResult> Add([FromBody] ToDoItem value)
+        public async Task<IActionResult> Add([FromBody] ToDoItemInput userInput)
         {
             try
             {
                 var currentUser = await GetCurrentUserAsync();
-                await _ToDoItemsApplication.CreateToDoItemAsync(currentUser, value);
-                return CreatedAtAction(nameof(Get), new { id = value.Id }, value);
+                ToDoItem newEntry = _mapper.Map<ToDoItem>(userInput);
+                newEntry.UserId = currentUser.Id;
+                await _ToDoItemsApplication.CreateToDoItemAsync(currentUser, newEntry);
+                var createdEntry = await _ToDoItemsApplication.GetItemByIdAsync(currentUser, newEntry.Id);
+                var createdEntryView = _mapper.Map<ToDoItemView>(createdEntry);
+                return CreatedAtAction(nameof(Get), new { id = createdEntryView.Id }, createdEntryView);
             }
             catch (Exception ex)
             {
@@ -71,12 +86,14 @@ namespace ToDoApp.WebAPI.Controllers
         }
 
         [HttpPost("/Update")]
-        public async Task<IActionResult> Update([FromBody] ToDoItem value)
+        public async Task<IActionResult> Update([FromBody] ToDoItemInput userInput)
         {
             try
             {
                 var currentUser = await GetCurrentUserAsync();
-                await _ToDoItemsApplication.UpdateToDoItemAsync(currentUser, value);
+                ToDoItem updatingEntry = _mapper.Map<ToDoItem>(userInput);
+                updatingEntry.UserId = currentUser.Id;
+                await _ToDoItemsApplication.UpdateToDoItemAsync(currentUser, updatingEntry);
                 return Ok();
             }
             catch (Exception ex)

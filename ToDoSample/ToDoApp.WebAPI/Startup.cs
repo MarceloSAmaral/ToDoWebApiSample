@@ -10,6 +10,7 @@ using ToDoApp.AppServices;
 using ToDoApp.CoreObjects.AppInterfaces;
 using ToDoApp.CoreObjects.RepoInterfaces;
 using ToDoApp.Data;
+using AutoMapper;
 
 namespace ToDoApp.WebAPI
 {
@@ -29,6 +30,7 @@ namespace ToDoApp.WebAPI
             services.AddTransient<IUnitOfWorkFactory, UnitOfWorkFactory>();
             services.AddScoped<IUsersApplication, UserAppService>();
             services.AddScoped<IToDoItemsApplication, ToDoItemsApplication>();
+            services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
             services.AddControllers();
             services.AddSwaggerGen(c =>
             {
@@ -67,7 +69,7 @@ namespace ToDoApp.WebAPI
 
             var defaultUser = new CoreObjects.Entities.User()
             {
-                Id = new Guid("00000000-0000-0000-0001-000000000001"), /*Easy to remember*/
+                Id = new Guid("00000000-0000-0000-0001-000000000001"), /*Easy to remember. This value should be a constant, for sure.*/
             };
             context.Users.Add(defaultUser);
 
